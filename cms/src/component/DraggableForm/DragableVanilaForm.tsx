@@ -9,9 +9,11 @@ type fieldProps = {
     name?:string;
     type?:string;
     label?:string;
-    id?: number;
+    id?: string;
 }
-
+type DraggableVanillaFormProps = {
+    onsubmit: (data: Record<string, string[]>) => void;
+};
 
 export default function DraggableVanillaForm() {
 
@@ -19,11 +21,11 @@ const [fieldsData, setFieldsData] = useState<fieldProps[]>([]);
 const [fieldCount, setFieldCount] = useState(1);
 
 const addFields = () =>{
-    const fieldsUpdatedData = [...fieldsData, {name:'input_type_field[]', type: 'text', label: 'Field'+fieldCount,id:fieldCount}];
-    setFieldsData(fieldsUpdatedData);
+    const keyData = {name:'input_type_field_key_'+fieldCount, type: 'text', label: 'Field Key '+fieldCount,id:'key_'+fieldCount};
+    const valueData = {name:'input_type_field_value_'+fieldCount, type: 'text', label: 'Field Value '+fieldCount,id:'value_'+fieldCount};
+    setFieldsData(prev => [...prev, keyData, valueData]);
     setFieldCount(fieldCount+1);
 }
-
 
 
   useEffect(() => {
@@ -68,7 +70,7 @@ const addFields = () =>{
       }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
   
-    const jsonFormDataSubmit = (e:React.FormEvent<HTMLFormElement>) =>{
+    const jsonFormDataSubmit = async(e:React.FormEvent<HTMLFormElement>) =>{
      e.preventDefault();
      const formData = new FormData(e.currentTarget);
      const objectFormData = Object.fromEntries(formData.entries());
@@ -81,6 +83,25 @@ const addFields = () =>{
       }
       groupedFormData[key].push(value as string);
     });
+
+
+    try {
+        const response = await fetch('/api/jsonSaveData', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(groupedFormData),
+        });
+  
+        if (response.ok) {
+          console.log('Form data saved successfully');
+        } else {
+          console.error('Error saving form data');
+        }
+      } catch (error) {
+        console.error('Error:', error);
+      }
 
 
      console.log(groupedFormData);
